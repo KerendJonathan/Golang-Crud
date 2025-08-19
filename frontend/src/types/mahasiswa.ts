@@ -3,6 +3,7 @@ export type Mahasiswa = {
   npm: string;
   nama: string;
   kelas: string;
+  minat: string;
   profile: string;
 };
 

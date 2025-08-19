@@ -19,17 +19,17 @@ import (
 	"goweb-crud/backend/internal/utils"
 )
 
-// Payload untuk mode JSON
 type mahasiswaPayload struct {
 	NPM     string `json:"npm"`
 	Nama    string `json:"nama"`
 	Kelas   string `json:"kelas"`
+	Minat   string `json:"minat"`
 	Profile string `json:"profile"` // opsional: nama file (bukan upload)
 }
 
 func isJSON(c *gin.Context) bool {
-	ct := c.GetHeader("Content-Type")
-	return strings.HasPrefix(strings.ToLower(ct), "application/json")
+	ct := strings.ToLower(c.GetHeader("Content-Type"))
+	return strings.HasPrefix(ct, "application/json")
 }
 
 func ListMahasiswa(c *gin.Context) {
@@ -49,7 +49,10 @@ func ListMahasiswa(c *gin.Context) {
 	query := dbpkg.Conn.Model(&models.Mahasiswa{})
 	if q != "" {
 		like := "%" + strings.TrimSpace(q) + "%"
-		query = query.Where("npm LIKE ? OR nama LIKE ? OR kelas LIKE ?", like, like, like)
+		query = query.Where(
+			"npm LIKE ? OR nama LIKE ? OR kelas LIKE ? OR minat LIKE ?",
+			like, like, like, like,
+		)
 	}
 	query.Count(&total)
 	if err := query.Order("id DESC").Limit(limit).Offset((page - 1) * limit).Find(&items).Error; err != nil {
@@ -79,12 +82,11 @@ func GetMahasiswa(c *gin.Context) {
 	c.JSON(http.StatusOK, utils.SingleResponse[models.Mahasiswa]{Data: item})
 }
 
-// ==== Create: dukung JSON dan multipart/form-data ====
+// ==== Create: dukung JSON & multipart/form-data ====
 func CreateMahasiswa(c *gin.Context) {
 	var item models.Mahasiswa
 
 	if isJSON(c) {
-		// --- JSON mode ---
 		var p mahasiswaPayload
 		if err := c.ShouldBindJSON(&p); err != nil {
 			c.JSON(http.StatusBadRequest, utils.ErrorResponse{Error: "JSON tidak valid"})
@@ -93,9 +95,10 @@ func CreateMahasiswa(c *gin.Context) {
 		p.NPM = strings.TrimSpace(p.NPM)
 		p.Nama = strings.TrimSpace(p.Nama)
 		p.Kelas = strings.TrimSpace(p.Kelas)
+		p.Minat = strings.TrimSpace(p.Minat)
 
-		if len(p.NPM) != 8 || p.Nama == "" || p.Kelas == "" {
-			c.JSON(http.StatusBadRequest, utils.ErrorResponse{Error: "Field tidak valid (npm 8 digit, nama & kelas wajib)"})
+		if len(p.NPM) != 8 || p.Nama == "" || p.Kelas == "" || p.Minat == "" {
+			c.JSON(http.StatusBadRequest, utils.ErrorResponse{Error: "Field tidak valid (npm 8 digit, nama/kelas/minat wajib)"})
 			return
 		}
 
@@ -103,18 +106,19 @@ func CreateMahasiswa(c *gin.Context) {
 			NPM:     p.NPM,
 			Nama:    p.Nama,
 			Kelas:   p.Kelas,
-			Profile: p.Profile, // hanya string; upload file tidak berlaku di JSON mode
+			Minat:   p.Minat,
+			Profile: p.Profile, // string saja di mode JSON
 		}
 	} else {
-		// --- multipart/form-data mode ---
 		npm := strings.TrimSpace(c.PostForm("npm"))
 		nama := strings.TrimSpace(c.PostForm("nama"))
 		kelas := strings.TrimSpace(c.PostForm("kelas"))
-		if len(npm) != 8 || nama == "" || kelas == "" {
-			c.JSON(http.StatusBadRequest, utils.ErrorResponse{Error: "Field tidak valid (npm 8 digit, nama & kelas wajib)"})
+		minat := strings.TrimSpace(c.PostForm("minat"))
+		if len(npm) != 8 || nama == "" || kelas == "" || minat == "" {
+			c.JSON(http.StatusBadRequest, utils.ErrorResponse{Error: "Field tidak valid (npm 8 digit, nama/kelas/minat wajib)"})
 			return
 		}
-		item = models.Mahasiswa{NPM: npm, Nama: nama, Kelas: kelas}
+		item = models.Mahasiswa{NPM: npm, Nama: nama, Kelas: kelas, Minat: minat}
 
 		if fh, err := c.FormFile("profile"); err == nil && fh != nil {
 			saved, saveErr := saveUpload(fh)
@@ -135,7 +139,7 @@ func CreateMahasiswa(c *gin.Context) {
 	c.JSON(http.StatusCreated, utils.SingleResponse[models.Mahasiswa]{Data: item})
 }
 
-// ==== Update: dukung JSON dan multipart/form-data ====
+// ==== Update: dukung JSON & multipart/form-data ====
 func UpdateMahasiswa(c *gin.Context) {
 	id := c.Param("id")
 	var item models.Mahasiswa
@@ -149,7 +153,6 @@ func UpdateMahasiswa(c *gin.Context) {
 	}
 
 	if isJSON(c) {
-		// --- JSON mode ---
 		var p mahasiswaPayload
 		if err := c.ShouldBindJSON(&p); err != nil {
 			c.JSON(http.StatusBadRequest, utils.ErrorResponse{Error: "JSON tidak valid"})
@@ -168,11 +171,13 @@ func UpdateMahasiswa(c *gin.Context) {
 		if v := strings.TrimSpace(p.Kelas); v != "" {
 			item.Kelas = v
 		}
+		if v := strings.TrimSpace(p.Minat); v != "" {
+			item.Minat = v
+		}
 		if v := strings.TrimSpace(p.Profile); v != "" {
-			item.Profile = v // hanya string; upload file tidak berlaku di JSON mode
+			item.Profile = v
 		}
 	} else {
-		// --- multipart/form-data mode ---
 		if v := strings.TrimSpace(c.PostForm("npm")); v != "" {
 			if len(v) != 8 {
 				c.JSON(400, utils.ErrorResponse{Error: "npm harus 8 digit"})
@@ -185,6 +190,9 @@ func UpdateMahasiswa(c *gin.Context) {
 		}
 		if v := strings.TrimSpace(c.PostForm("kelas")); v != "" {
 			item.Kelas = v
+		}
+		if v := strings.TrimSpace(c.PostForm("minat")); v != "" {
+			item.Minat = v
 		}
 
 		if fh, err := c.FormFile("profile"); err == nil && fh != nil {
@@ -232,9 +240,7 @@ func DeleteMahasiswa(c *gin.Context) {
 	c.Status(http.StatusNoContent)
 }
 
-// Simpan file upload (validasi tipe & ukuran)
 func saveUpload(fh *multipart.FileHeader) (string, error) {
-	// Validasi: gambar ≤ 2MB
 	if fh.Size > 2*1024*1024 {
 		return "", fmt.Errorf("file terlalu besar (maks 2MB)")
 	}

@@ -2,20 +2,27 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ========== Base ========== */
 :root {
   color-scheme: light;
 }
 body {
   @apply bg-gray-50 text-gray-900;
 }
+
+/* ========== Layout & Card ========== */
 .container {
   @apply max-w-5xl mx-auto px-4 py-6;
 }
 .card {
   @apply bg-white rounded-2xl shadow-sm border border-gray-100;
 }
+
+/* ========== Buttons ========== */
 .btn {
-  @apply inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium border border-gray-200 bg-white hover:bg-gray-50 active:bg-gray-100;
+  @apply inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium
+         border border-gray-200 bg-white hover:bg-gray-50 active:bg-gray-100
+         disabled:opacity-50 disabled:cursor-not-allowed;
 }
 .btn-primary {
   @apply bg-brand-600 text-white border-transparent hover:bg-brand-700 active:bg-brand-800;
@@ -23,25 +30,108 @@ body {
 .btn-danger {
   @apply bg-red-600 text-white border-transparent hover:bg-red-700 active:bg-red-800;
 }
+/* varian & ukuran opsional */
+.btn-ghost {
+  @apply border-transparent bg-transparent hover:bg-gray-50;
+}
+.btn-outline {
+  @apply bg-transparent border-gray-300 hover:bg-gray-50;
+}
+.btn-sm {
+  @apply px-3 py-1.5 text-xs rounded-lg;
+}
+.btn-lg {
+  @apply px-5 py-3 text-base;
+}
+
+/* ========== Forms ========== */
 .input {
-  @apply rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400 w-full;
+  @apply rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm
+         focus:outline-none focus:ring-2 focus:ring-brand-400 w-full;
+}
+.input-error {
+  @apply border-red-400 focus:ring-red-300;
 }
 .label {
   @apply text-sm font-medium text-gray-700;
 }
+
+/* ========== Table ========== */
 .table {
-  @apply w-full border-collapse;
+  @apply w-full border-collapse text-sm;
 }
 .table th {
   @apply bg-gray-50 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide;
 }
 .table th,
 .table td {
-  @apply border-b border-gray-100 px-3 py-2;
+  @apply border-b border-gray-100 px-3 py-2 align-middle;
 }
+/* header sticky (opsional: tambahkan pada <thead>) */
+.table-sticky thead th {
+  @apply sticky top-0 z-10 bg-white;
+}
+/* zebra (opsional: tambahkan class .table-zebra ke <table>) */
+.table-zebra tbody tr:nth-child(even) {
+  @apply bg-gray-50/50;
+}
+
+/* ========== Badges / Chips ========== */
+.badge {
+  @apply inline-flex items-center px-2 py-0.5 rounded-lg text-xs border border-gray-200 bg-gray-50;
+}
+.badge-danger {
+  @apply border-red-200 bg-red-50 text-red-700;
+}
+.badge-success {
+  @apply border-green-200 bg-green-50 text-green-700;
+}
+
+/* ========== Keyboard hint & Skeleton ========== */
 .kbd {
-  @apply bg-gray-100 px-2 py-1 rounded-md border border-gray-200 text-xs;
+  @apply bg-gray-100 px-2 py-1 rounded-md border border-gray-200 text-xs font-mono;
 }
 .skel {
   @apply animate-pulse bg-gray-200 rounded;
+}
+
+/* ========== Animations (dipakai modal konfirmasi) ========== */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes zoom-in-95 {
+  from {
+    transform: scale(0.95);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+.animate-in {
+  animation: fade-in 0.15s ease-out both;
+}
+.zoom-in-95 {
+  animation: zoom-in-95 0.15s ease-out both;
+}
+
+/* ========== Scrollbar (opsional, desktop) ========== */
+@media (min-width: 640px) {
+  *::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  *::-webkit-scrollbar-thumb {
+    @apply bg-gray-300 rounded-full;
+  }
+  *::-webkit-scrollbar-thumb:hover {
+    @apply bg-gray-400;
+  }
+  *::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
 }

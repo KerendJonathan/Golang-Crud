@@ -1,12 +1,12 @@
 package models
 
-// Sesuai tabel existing `mahasiswa` pada DB goweb
-// Kolom: id (PK), npm, nama, kelas, profile
+// Sesuai tabel `mahasiswa` (id, npm, nama, kelas, minat, profile)
 type Mahasiswa struct {
 	ID      uint   `gorm:"primaryKey" json:"id"`
 	NPM     string `json:"npm"`
 	Nama    string `json:"nama"`
 	Kelas   string `json:"kelas"`
+	Minat   string `json:"minat"`
 	Profile string `json:"profile"`
 }
 

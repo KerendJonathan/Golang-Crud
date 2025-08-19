@@ -16,6 +16,7 @@ const schema = z.object({
   npm: z.string().min(8, "NPM 8 digit").max(8, "NPM 8 digit"),
   nama: z.string().min(1, "Nama wajib"),
   kelas: z.string().min(1, "Kelas wajib"),
+  minat: z.string().min(1, "Minat wajib"),
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -35,20 +36,25 @@ export default function MahasiswaForm() {
     setValue,
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: { npm: "", nama: "", kelas: "" },
+    defaultValues: { npm: "", nama: "", kelas: "", minat: "" },
   });
 
   useEffect(() => {
     (async () => {
       if (isEdit && id) {
-        const { data } = await getMahasiswa(id);
-        setValue("npm", data.npm);
-        setValue("nama", data.nama);
-        setValue("kelas", data.kelas);
-        if (data.profile) setPreview(`/uploads/${data.profile}`);
+        try {
+          const { data } = await getMahasiswa(id);
+          setValue("npm", data.npm);
+          setValue("nama", data.nama);
+          setValue("kelas", data.kelas);
+          setValue("minat", data.minat ?? "");
+          if (data.profile) setPreview(`/uploads/${data.profile}`);
+        } catch (e: any) {
+          toast.error(e?.message || "Gagal mengambil data");
+        }
       }
     })();
-  }, [id, isEdit]);
+  }, [id, isEdit, setValue]);
 
   const onSubmit = async (v: FormValues) => {
     try {
@@ -58,10 +64,12 @@ export default function MahasiswaForm() {
         fd.append("npm", v.npm);
         fd.append("nama", v.nama);
         fd.append("kelas", v.kelas);
+        fd.append("minat", v.minat); // ← ikutkan minat
         fd.append("profile", file);
         if (isEdit && id) await updateMahasiswaForm(id, fd);
         else await createMahasiswaForm(fd);
       } else {
+        // mode JSON (tanpa upload file)
         if (isEdit && id) await updateMahasiswaJSON(id, v);
         else await createMahasiswaJSON(v);
       }
@@ -87,6 +95,7 @@ export default function MahasiswaForm() {
             <p className="text-red-600 text-xs mt-1">{errors.npm.message}</p>
           )}
         </div>
+
         <div>
           <label className="label">Nama</label>
           <input
@@ -98,6 +107,7 @@ export default function MahasiswaForm() {
             <p className="text-red-600 text-xs mt-1">{errors.nama.message}</p>
           )}
         </div>
+
         <div>
           <label className="label">Kelas</label>
           <input className="input" placeholder="4IA17" {...register("kelas")} />
@@ -105,6 +115,19 @@ export default function MahasiswaForm() {
             <p className="text-red-600 text-xs mt-1">{errors.kelas.message}</p>
           )}
         </div>
+
+        <div>
+          <label className="label">Minat</label>
+          <input
+            className="input"
+            placeholder="Contoh: Web, Mobile, Data"
+            {...register("minat")}
+          />
+          {errors.minat && (
+            <p className="text-red-600 text-xs mt-1">{errors.minat.message}</p>
+          )}
+        </div>
+
         <div>
           <label className="label">Profile (foto, opsional)</label>
           <input
@@ -121,6 +144,7 @@ export default function MahasiswaForm() {
             <img
               src={preview}
               className="mt-2 h-24 w-24 rounded-xl border object-cover"
+              alt="Preview"
             />
           )}
         </div>
